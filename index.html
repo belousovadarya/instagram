@@ -21,7 +21,7 @@
   }
 }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 170px; }
+html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -170,7 +170,7 @@ function card(p) {
       ${p.gone ? '<div class="note">Публикация удалена автором после сбора материала.</div>' : ''}
       <div class="foot">
         <a class="go" href="${p.u}" target="_blank" rel="noopener">${label} →</a>
-        ${p.c.split('\n').length > 3 || p.c.length > 160 ? '<button class="more" type="button">Вся подпись</button>' : ''}
+        <button class="more" type="button" hidden>Вся подпись</button>
       </div>
     </div>
   </article>`;
@@ -188,6 +188,11 @@ function render() {
     html += card(p);
   }
   $('list').innerHTML = html || '<div class="empty">Ничего не найдено</div>';
+  // кнопка «Вся подпись» только там, где подпись реально обрезана
+  document.querySelectorAll('.card').forEach(c => {
+    const cap = c.querySelector('.cap');
+    c.querySelector('.more').hidden = cap.scrollHeight <= cap.clientHeight + 1;
+  });
   $('status').textContent = shown.length === DATA.posts.length ? `Всего публикаций: ${shown.length}` : `Найдено: ${shown.length} из ${DATA.posts.length}`;
   $('clear').style.display = state.q ? 'block' : 'none';
   document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', state[b.dataset.key] === b.dataset.value));
@@ -210,7 +215,8 @@ function jumpToHash() {
   const n = parseInt(location.hash.replace(/\D/g, ''), 10);
   if (!n || n < 1 || n > DATA.posts.length) return;
   Object.assign(state, { q: '', author: 'all', format: 'all' }); $('q').value = ''; render();
-  const el = $('p' + n); el.scrollIntoView({ block: 'start' });
+  const el = $('p' + n);
+  window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - document.querySelector('.bar').offsetHeight - 12 });
   el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600);
 }
 window.addEventListener('hashchange', jumpToHash);
